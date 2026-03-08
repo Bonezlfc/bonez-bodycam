@@ -93,6 +93,15 @@ Citizen.CreateThread(function()
     end
 end)
 
+-- ── bonez-bodycam_evidence auto-overlay export ───────────────
+--
+-- Called by bonez-bodycam_evidence when a callout is attached or
+-- a unit is being tracked. Session-only — does NOT persist to KVP.
+
+exports('setOverlayEnabled', function(state)
+    Settings.enabled = (state == true)
+end)
+
 -- ── Receive proximity beep ────────────────────────────────────
 --
 -- Server already confirmed we are within range.  We do a final

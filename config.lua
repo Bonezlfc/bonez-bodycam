@@ -34,6 +34,18 @@ Config.Defaults = {
 Config.ERSPollInterval = 300   -- ms between ERS export polls
 
 -- ─────────────────────────────────────────────────────────────
+--  PERMISSIONS
+-- ─────────────────────────────────────────────────────────────
+
+-- Discord role IDs allowed to open the bodycam settings menu.
+-- Right-click a role in Discord (Developer Mode on) → "Copy Role ID", paste it below.
+-- Leave as an empty table ({}) to allow ALL players to open the menu.
+Config.AdminRoles = {
+    -- "000000000000000000",   -- example: Admin
+    -- "000000000000000001",   -- example: Moderator
+}
+
+-- ─────────────────────────────────────────────────────────────
 --  LAYOUT
 -- ─────────────────────────────────────────────────────────────
 

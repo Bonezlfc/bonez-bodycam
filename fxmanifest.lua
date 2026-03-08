@@ -1,8 +1,9 @@
 fx_version 'cerulean'
 game 'gta5'
+lua54 'yes'
 
 name        'Bonez-Bodycam'
-description 'Bodycam overlay with Axon, Motorola, and Generic styles. night_ers integration for on-shift detection.'
+description 'Bodycam overlay with Axon, Motorola, and Generic styles. Optional night_ers integration for on-shift detection.'
 author      'Bonez Workshop'
 version     '2.0.0'
 
@@ -24,10 +25,13 @@ shared_scripts {
 client_scripts {
     'client/settings.lua',
     'client/ers.lua',
+    'client/NativeUI.lua',
     'client/menu.lua',
     'client/main.lua',
 }
 
 server_scripts {
+    'server/svConfig.lua',   -- Discord credentials (bot token + guild ID)
+    'server/discord.lua',    -- Discord API helpers (reads configS)
     'server/server.lua',
 }

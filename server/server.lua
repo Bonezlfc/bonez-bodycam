@@ -63,6 +63,20 @@ RegisterNetEvent('bodycam:requestBeep', function()
     end
 end)
 
+-- ── Discord role permission check ────────────────────────────
+--
+-- Client fires bodycam:checkPerms on resource start.
+-- Server fetches the player's Discord roles and sends them back.
+-- Client stores them in playerPerms and gates menu access against
+-- Config.AdminRoles.
+
+RegisterNetEvent('bodycam:checkPerms')
+AddEventHandler('bodycam:checkPerms', function()
+    local src   = source
+    local roles = GetPlayerRoles(src)
+    TriggerClientEvent('bodycam:perms', src, roles or {})
+end)
+
 -- ── Clean up on disconnect ───────────────────────────────────
 
 AddEventHandler('playerDropped', function()
