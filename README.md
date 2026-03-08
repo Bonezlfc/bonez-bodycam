@@ -23,7 +23,7 @@ Pair it with [bonez-bodycam_evidence](https://github.com/Bonezlfc/Bonez-Bodycam_
 ## Requirements
 
 - **FiveM** server (OneSync Legacy or Infinity)
-- [**night_ers**]([https://github.com/night-scripts/night_ers](https://store.nights-software.com/category/ersgamemode)) — controls on-shift detection
+- [**night_ers**](https://store.nights-software.com/category/ersgamemode) — controls on-shift detection
 
 ---
 
