@@ -1,3 +1,4 @@
+---@diagnostic disable: duplicate-set-field
 -- ─────────────────────────────────────────────────────────────
 --  client/settings.lua  —  KVP-backed persistent player settings
 -- ─────────────────────────────────────────────────────────────
@@ -39,36 +40,39 @@ end
 
 function Settings.Load()
     local d = Config.Defaults
-    Settings.enabled      = KvpBool('enabled',      d.enabled)
-    Settings.style        = KvpStr ('style',         d.style)
-    Settings.position     = KvpStr ('position',      d.position)
-    Settings.scale        = KvpStr ('scale',         d.scale)
-    Settings.showService  = KvpBool('showService',   d.showService)
-    Settings.showCallout  = KvpBool('showCallout',   d.showCallout)
-    Settings.showTracking = KvpBool('showTracking',  d.showTracking)
-    Settings.showUnit     = KvpBool('showUnit',      d.showUnit)
+    Settings.enabled           = KvpBool('enabled',           d.enabled)
+    Settings.style             = KvpStr ('style',              d.style)
+    Settings.position          = KvpStr ('position',           d.position)
+    Settings.scale             = KvpStr ('scale',              d.scale)
+    Settings.showService       = KvpBool('showService',        d.showService)
+    Settings.showCallout       = KvpBool('showCallout',        d.showCallout)
+    Settings.showTracking      = KvpBool('showTracking',       d.showTracking)
+    Settings.showUnit          = KvpBool('showUnit',           d.showUnit)
+    Settings.manualServiceType = KvpStr ('manualServiceType',  d.manualServiceType)
 end
 
 function Settings.Save()
-    SaveBool('enabled',      Settings.enabled)
-    SaveStr ('style',        Settings.style)
-    SaveStr ('position',     Settings.position)
-    SaveStr ('scale',        Settings.scale)
-    SaveBool('showService',  Settings.showService)
-    SaveBool('showCallout',  Settings.showCallout)
-    SaveBool('showTracking', Settings.showTracking)
-    SaveBool('showUnit',     Settings.showUnit)
+    SaveBool('enabled',           Settings.enabled)
+    SaveStr ('style',             Settings.style)
+    SaveStr ('position',          Settings.position)
+    SaveStr ('scale',             Settings.scale)
+    SaveBool('showService',       Settings.showService)
+    SaveBool('showCallout',       Settings.showCallout)
+    SaveBool('showTracking',      Settings.showTracking)
+    SaveBool('showUnit',          Settings.showUnit)
+    SaveStr ('manualServiceType', Settings.manualServiceType)
 end
 
 function Settings.Reset()
     local d = Config.Defaults
-    Settings.enabled      = d.enabled
-    Settings.style        = d.style
-    Settings.position     = d.position
-    Settings.scale        = d.scale
-    Settings.showService  = d.showService
-    Settings.showCallout  = d.showCallout
-    Settings.showTracking = d.showTracking
-    Settings.showUnit     = d.showUnit
+    Settings.enabled           = d.enabled
+    Settings.style             = d.style
+    Settings.position          = d.position
+    Settings.scale             = d.scale
+    Settings.showService       = d.showService
+    Settings.showCallout       = d.showCallout
+    Settings.showTracking      = d.showTracking
+    Settings.showUnit          = d.showUnit
+    Settings.manualServiceType = d.manualServiceType
     Settings.Save()
 end

@@ -25,13 +25,11 @@ Config.Defaults = {
     showCallout  = true,
     showTracking = true,
     showUnit     = true,
+
+    -- Manual service type shown on overlay when ERS is not running.
+    -- Leave blank ('') to show no service badge when ERS is absent.
+    manualServiceType = '',
 }
-
--- ─────────────────────────────────────────────────────────────
---  PERFORMANCE
--- ─────────────────────────────────────────────────────────────
-
-Config.ERSPollInterval = 300   -- ms between ERS export polls
 
 -- ─────────────────────────────────────────────────────────────
 --  PERMISSIONS
@@ -46,6 +44,12 @@ Config.AdminRoles = {
 }
 
 -- ─────────────────────────────────────────────────────────────
+--  PERFORMANCE
+-- ─────────────────────────────────────────────────────────────
+
+Config.ERSPollInterval = 300   -- ms between ERS export polls
+
+-- ─────────────────────────────────────────────────────────────
 --  LAYOUT
 -- ─────────────────────────────────────────────────────────────
 
@@ -56,12 +60,38 @@ Config.BlinkInterval = 900     -- REC blink period (ms)
 --  PROXIMITY SOUND
 -- ─────────────────────────────────────────────────────────────
 
--- How often (ms) the bodycam emits a beep audible to nearby players
-Config.BeepInterval  = 120000  -- 2 minutes
+Config.BeepInterval  = 120000  -- ms between proximity beeps (2 minutes)
+Config.BeepRange     = 15.0    -- metres at which beep can be heard
+Config.BeepVolume    = 0.25    -- volume multiplier (distance-faded)
 
--- Maximum distance (metres) at which the beep can be heard
-Config.BeepRange     = 15.0
+-- ─────────────────────────────────────────────────────────────
+--  SERVICE TYPES
+-- ─────────────────────────────────────────────────────────────
+--  Shown in the settings menu when ERS is not running so players
+--  can manually set their department badge on the overlay.
+--  Add / remove entries to match your server's departments.
+-- ─────────────────────────────────────────────────────────────
 
--- Master volume multiplier for the proximity beep (0.0 = silent, 1.0 = full)
--- The final per-player volume is this value × the distance fade (loud nearby, quiet at edge)
-Config.BeepVolume    = 0.25
+Config.ServiceTypes = {
+    '',               -- blank = no service badge
+    'POLICE',
+    'FIRE',
+    'EMS',
+    'SAR',
+    'RANGER',
+    'SHERIFF',
+    'HIGHWAY PATROL',
+}
+
+-- ─────────────────────────────────────────────────────────────
+--  RECORDING TOGGLE SOUNDS
+-- ─────────────────────────────────────────────────────────────
+--  Each overlay style gets its own pair of sounds played when
+--  recording starts (on) and stops (off).
+--
+--  Drop your WAV/MP3 files into  bonez-bodycam/html/sound/
+--  and name them as below.  Placeholder copies of beep.wav
+--  ship with the resource — replace them with real sounds.
+-- ─────────────────────────────────────────────────────────────
+
+Config.RecordSoundVolume = 0.80   -- 0.0 – 1.0

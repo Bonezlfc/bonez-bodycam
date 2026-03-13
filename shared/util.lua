@@ -26,3 +26,36 @@ function Clamp(v, lo, hi)
     if v > hi then return hi end
     return v
 end
+
+--- Returns the active service type string, or nil if none.
+--- Prefers ERS state; falls back to the player's manual setting.
+function GetActiveServiceType()
+    if ERSState and ERSState.serviceType then return ERSState.serviceType end
+    if Settings and Settings.manualServiceType and Settings.manualServiceType ~= '' then
+        return Settings.manualServiceType
+    end
+    return nil
+end
+
+--- Returns the callsign from ERS/MDT if available, otherwise the raw unit ID.
+function GetUnitLabel(uid)
+    if ERSState and ERSState.callsign and ERSState.callsign ~= '' then
+        return ERSState.callsign
+    end
+    return uid
+end
+
+--- Returns true when the bodycam should be in the recording state.
+--- Respects manualRecording mode and ERS on-shift state.
+function IsRecording()
+    if not Settings or not Settings.enabled then return false end
+    if Settings.manualRecording then
+        if ERSState and ERSState.available then
+            return ERSState.onShift and Settings.recording
+        else
+            return Settings.recording == true
+        end
+    else
+        return ERSState and ERSState.onShift or false
+    end
+end

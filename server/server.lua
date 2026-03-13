@@ -12,16 +12,19 @@
 --      (Infinity or Legacy) because the server tracks all entity positions.
 -- ─────────────────────────────────────────────────────────────
 
-local activeCams = {}   -- [serverId] = true
+-- [serverId] = { name = string, callsign = string|nil }
+local activeCams = {}
 
 -- ── State sync ───────────────────────────────────────────────
 
 -- Client fires this whenever its active state changes.
--- "active" = overlay enabled AND player is on shift.
+-- "active" = overlay enabled AND player is recording.
 RegisterNetEvent('bodycam:setActive', function(active)
     local src = source
     if active then
-        activeCams[src] = true
+        activeCams[src] = {
+            name = GetPlayerName(src) or '',
+        }
     else
         activeCams[src] = nil
     end
@@ -46,7 +49,7 @@ RegisterNetEvent('bodycam:requestBeep', function()
     local range = (Config and Config.BeepRange) or 15.0
 
     for _, pidStr in ipairs(GetPlayers()) do
-        local pid    = tonumber(pidStr)
+        local pid    = tonumber(pidStr) or 0
         local ped    = GetPlayerPed(pid)
         local coords = GetEntityCoords(ped)
 
@@ -75,6 +78,56 @@ AddEventHandler('bodycam:checkPerms', function()
     local src   = source
     local roles = GetPlayerRoles(src)
     TriggerClientEvent('bodycam:perms', src, roles or {})
+end)
+
+-- ── Search exports ───────────────────────────────────────────
+--
+-- Used by bonez-bodycam_evidence (and any external resource) to
+-- look up which players currently have an active bodycam.
+
+-- Returns a table of { serverId, name } for all active cams.
+exports('getActiveCams', function()
+    local result = {}
+    for sid, data in pairs(activeCams) do
+        table.insert(result, {
+            serverId = sid,
+            name     = data.name,
+        })
+    end
+    return result
+end)
+
+-- Returns the entry for the first active cam whose player name contains
+-- the given string (case-insensitive), or nil if not found.
+exports('findCamByName', function(nameQuery)
+    local q = tostring(nameQuery or ''):lower()
+    for sid, data in pairs(activeCams) do
+        if data.name:lower():find(q, 1, true) then
+            return { serverId = sid, name = data.name }
+        end
+    end
+    return nil
+end)
+
+-- ── Server time sync ─────────────────────────────────────────
+--
+-- Client requests the server's local wall-clock time so the overlay
+-- always shows the server machine's time regardless of the client's timezone.
+-- We send an adjusted epoch: os.time() shifted by the server's UTC offset
+-- so that JS Date.getUTC*() methods return the server's local time.
+
+RegisterNetEvent('bodycam:requestServerTime')
+AddEventHandler('bodycam:requestServerTime', function()
+    local src     = source
+    local t_local = os.date('*t')   -- server local time components
+    local t_utc   = os.date('!*t')  -- UTC time components
+    local tz_offset = (t_local.hour * 3600 + t_local.min * 60 + t_local.sec)
+                    - (t_utc.hour   * 3600 + t_utc.min   * 60 + t_utc.sec)
+    -- Clamp across midnight boundaries
+    if tz_offset >  43200 then tz_offset = tz_offset - 86400 end
+    if tz_offset < -43200 then tz_offset = tz_offset + 86400 end
+    -- adjusted_epoch: when read as UTC gives the server's local time
+    TriggerClientEvent('bodycam:serverTime', src, os.time() + tz_offset)
 end)
 
 -- ── Clean up on disconnect ───────────────────────────────────

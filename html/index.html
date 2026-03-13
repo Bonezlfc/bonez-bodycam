@@ -77,6 +77,7 @@ var S = {
   position: 'topright',
   scale: 'medium',
   uid: '1',
+  unitLabel: '',
   showUnit: true,
   showService: true,
   showCallout: true,
@@ -85,6 +86,10 @@ var S = {
   attachedCallout: false,
   trackingUnit: false
 };
+
+/* Server time sync — adjusted epoch so getUTC*() returns server local time */
+var serverTimeMs   = null;   // adjusted epoch in ms (server local time as "fake UTC")
+var serverTimeSyncAt = null; // Date.now() when we received the epoch
 
 var recOn = true;
 
@@ -116,6 +121,9 @@ var E = {
 /* ─────────────────────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────────────────────── */
+/* Returns callsign if set, otherwise the raw uid */
+function unitDisplay() { return (S.unitLabel && S.unitLabel !== '') ? S.unitLabel : S.uid; }
+
 function p2(n) { return String(n).padStart(2, '0'); }
 function p7(n) { return String(n).padStart(7, '0'); }
 function p6(n) { return String(n).padStart(6, '0'); }
@@ -132,8 +140,18 @@ function swapClass(el, prefix, val) {
   el.className = cls.join(' ');
 }
 
+/* Returns a Date object representing the server's current local time.
+   Uses the synced epoch + elapsed ms since sync for accuracy.
+   Falls back to client UTC before the first sync arrives. */
+function getServerDate() {
+  if (serverTimeMs !== null) {
+    return new Date(serverTimeMs + (Date.now() - serverTimeSyncAt));
+  }
+  return new Date(); // pre-sync fallback
+}
+
 function getUTC() {
-  var d = new Date();
+  var d = getServerDate();
   return {
     iso:  d.getUTCFullYear() + '-' + p2(d.getUTCMonth()+1) + '-' + p2(d.getUTCDate())
           + ' ' + p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + ':' + p2(d.getUTCSeconds())
@@ -149,7 +167,7 @@ function getUTC() {
 ───────────────────────────────────────────────────────────── */
 function buildMotoInfo(t) {
   var parts = [];
-  if (S.showUnit) parts.push('U:' + S.uid);
+  if (S.showUnit) parts.push('U:' + unitDisplay());
   parts.push(t.dmy, t.time, 'BWC2-' + p6(S.uid));
   if (S.showService  && S.serviceType)     parts.push(String(S.serviceType).toUpperCase());
   if (S.showCallout  && S.attachedCallout) parts.push('CALLOUT');
@@ -187,7 +205,7 @@ function applyState(data) {
     E.axonDevice.textContent = 'BODYCAM 3   x' + p7(parseInt(S.uid) || 0);
 
     toggle(E.axonUnit,    S.showUnit);
-    if (S.showUnit) E.axonUnit.textContent = 'UNIT ' + S.uid;
+    if (S.showUnit) E.axonUnit.textContent = 'UNIT ' + unitDisplay();
 
     toggle(E.axonSvc, S.showService && !!S.serviceType);
     if (S.showService && S.serviceType)
@@ -200,7 +218,7 @@ function applyState(data) {
   /* ── GENERIC content ── */
   if (showGen) {
     var infoParts = [];
-    if (S.showUnit) infoParts.push('UNIT:' + S.uid);
+    if (S.showUnit) infoParts.push('UNIT:' + unitDisplay());
     if (S.showService && S.serviceType)
       infoParts.push(String(S.serviceType).toUpperCase());
     toggle(E.genInfo, infoParts.length > 0);
@@ -266,13 +284,41 @@ function playBeep(volume) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Record toggle sounds — one pair per overlay style
+───────────────────────────────────────────────────────────── */
+var recSounds = {
+  axon:     { on: new Audio('sound/axon_rec_on.wav'),     off: new Audio('sound/axon_rec_off.wav')     },
+  motorola: { on: new Audio('sound/motorola_rec_on.wav'), off: new Audio('sound/motorola_rec_off.wav') },
+  generic:  { on: new Audio('sound/generic_rec_on.wav'),  off: new Audio('sound/generic_rec_off.wav')  }
+};
+(function() {
+  for (var style in recSounds) {
+    recSounds[style].on.preload  = 'auto';
+    recSounds[style].off.preload = 'auto';
+  }
+})();
+
+function playRecordSound(recording, style, volume) {
+  var pair = recSounds[style] || recSounds['generic'];
+  var snd  = recording ? pair.on : pair.off;
+  snd.volume = Math.max(0, Math.min(1, volume || 0.8));
+  snd.currentTime = 0;
+  snd.play().catch(function() {});
+}
+
+/* ─────────────────────────────────────────────────────────────
    NUI message listener
 ───────────────────────────────────────────────────────────── */
 window.addEventListener('message', function(ev) {
   var d = ev.data;
   if (!d) return;
-  if (d.action === 'setState') applyState(d);
-  if (d.action === 'playBeep') playBeep(d.volume);
+  if (d.action === 'setState')        applyState(d);
+  if (d.action === 'playBeep')        playBeep(d.volume);
+  if (d.action === 'playRecordSound') playRecordSound(d.recording, d.style, d.volume);
+  if (d.action === 'syncServerTime') {
+    serverTimeMs   = d.serverTimeMs;
+    serverTimeSyncAt = Date.now();
+  }
 });
 
 /* init clock */

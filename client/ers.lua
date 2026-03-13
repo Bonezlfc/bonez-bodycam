@@ -82,3 +82,33 @@ Citizen.CreateThread(function()
         Citizen.Wait(Config.ERSPollInterval)
     end
 end)
+
+-- ── Global helpers (used by main.lua and the NUI sync thread) ──────────────
+
+-- Returns true when bonez-bodycam_evidence is actively recording.
+-- Queries the evidence resource export; returns false if the evidence
+-- resource is not running (overlay stays hidden when standalone).
+function IsRecording()
+    local ok, val = pcall(function()
+        return exports['bonez-bodycam_evidence']:isRecording()
+    end)
+    return ok and val == true
+end
+
+-- Returns the player's server ID as the unit label.
+function GetUnitLabel(uid)
+    return tostring(uid)
+end
+
+-- Returns the active service-type label for overlay display.
+-- Prefers the live ERS service type; falls back to the player's
+-- manually-selected service type from the settings menu.
+function GetActiveServiceType()
+    if ERSState.serviceType and ERSState.serviceType ~= '' then
+        return ERSState.serviceType
+    end
+    if Settings and Settings.manualServiceType and Settings.manualServiceType ~= '' then
+        return Settings.manualServiceType
+    end
+    return nil
+end

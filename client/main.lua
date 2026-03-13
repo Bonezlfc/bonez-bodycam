@@ -20,14 +20,30 @@ RegisterKeyMapping(
 -- ── ] key — toggle overlay on / off ──────────────────────────
 
 RegisterCommand(Config.ToggleCommand, function()
+    -- Block turning on while not on duty
+    if not Settings.enabled and not ERSState.onShift then
+        BeginTextCommandThefeedPost('STRING')
+        AddTextComponentSubstringPlayerName('~r~BODYCAM~s~: You must be on duty to enable the bodycam.')
+        EndTextCommandThefeedPostTicker(false, true)
+        return
+    end
+
     Settings.enabled = not Settings.enabled
     Settings.Save()
+
+    -- Turning the bodycam on starts recording; turning it off stops recording.
+    -- No-op if evidence is not running or already in the correct state.
+    if Settings.enabled then
+        pcall(function() exports['bonez-bodycam_evidence']:startManualRecord() end)
+    else
+        pcall(function() exports['bonez-bodycam_evidence']:stopManualRecord() end)
+    end
 
     BeginTextCommandThefeedPost('STRING')
     AddTextComponentSubstringPlayerName(
         Settings.enabled
-            and '~g~BODYCAM~s~: Overlay ~g~enabled'
-            or  '~r~BODYCAM~s~: Overlay ~r~disabled'
+            and '~g~BODYCAM~s~: ~g~ON ~s~— recording started'
+            or  '~r~BODYCAM~s~: ~r~OFF ~s~— recording stopped'
     )
     EndTextCommandThefeedPostTicker(false, true)
 end, false)
@@ -51,8 +67,9 @@ Citizen.CreateThread(function()
     while true do
         Citizen.Wait(500)
 
-        local uid    = tostring(GetPlayerServerId(PlayerId()))
-        local active = Settings.enabled and ERSState.onShift
+        local uid       = tostring(GetPlayerServerId(PlayerId()))
+        local active    = Settings.enabled and IsRecording()
+        local unitLabel = GetUnitLabel(uid)
 
         SendNUIMessage({
             action       = 'setState',
@@ -61,13 +78,14 @@ Citizen.CreateThread(function()
             position     = Settings.position,
             scale        = Settings.scale,
             uid          = uid,
+            unitLabel    = unitLabel,
             showUnit     = Settings.showUnit,
             showService  = Settings.showService,
             showCallout  = Settings.showCallout,
             showTracking = Settings.showTracking,
-            serviceType      = ERSState.serviceType     or false,
-            attachedCallout  = ERSState.attachedCallout or false,
-            trackingUnit     = ERSState.trackingUnit    or false,
+            serviceType      = GetActiveServiceType()       or false,
+            attachedCallout  = ERSState.attachedCallout     or false,
+            trackingUnit     = ERSState.trackingUnit        or false,
         })
 
         -- Only fire the server event when state actually changes
@@ -87,7 +105,7 @@ end)
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(Config.BeepInterval)
-        if Settings.enabled and ERSState.onShift then
+        if Settings.enabled and IsRecording() then
             TriggerServerEvent('bodycam:requestBeep')
         end
     end
@@ -100,6 +118,39 @@ end)
 
 exports('setOverlayEnabled', function(state)
     Settings.enabled = (state == true)
+end)
+
+-- Called by bonez-bodycam_evidence when recording starts or stops.
+-- Plays the audio feedback sound for the currently active overlay style.
+exports('playRecordSound', function(recording)
+    SendNUIMessage({
+        action    = 'playRecordSound',
+        recording = recording == true,
+        style     = Settings.style,
+        volume    = Config.RecordSoundVolume or 0.80,
+    })
+end)
+
+-- ── Server time sync ─────────────────────────────────────────
+--
+-- Requests the server's wall-clock time so the overlay always shows
+-- the server machine's local time regardless of the client's timezone.
+-- Re-syncs every 5 minutes to stay accurate.
+
+RegisterNetEvent('bodycam:serverTime')
+AddEventHandler('bodycam:serverTime', function(adjustedEpoch)
+    SendNUIMessage({
+        action       = 'syncServerTime',
+        serverTimeMs = adjustedEpoch * 1000,
+    })
+end)
+
+Citizen.CreateThread(function()
+    Citizen.Wait(1000)   -- small delay so server event handlers are ready
+    while true do
+        TriggerServerEvent('bodycam:requestServerTime')
+        Citizen.Wait(300000)  -- re-sync every 5 minutes
+    end
 end)
 
 -- ── Receive proximity beep ────────────────────────────────────
