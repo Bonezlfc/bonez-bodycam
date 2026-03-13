@@ -1,6 +1,16 @@
 Config = {}
 
 -- ─────────────────────────────────────────────────────────────
+--  DEBUG
+-- ─────────────────────────────────────────────────────────────
+--  Set to true to print state changes and errors to the F8 console.
+--  All output is prefixed with [BC:...] so it is easy to filter.
+--  Turn off in production — it adds a small amount of overhead.
+-- ─────────────────────────────────────────────────────────────
+
+Config.Debug = false
+
+-- ─────────────────────────────────────────────────────────────
 --  KEYBINDS / COMMANDS
 -- ─────────────────────────────────────────────────────────────
 

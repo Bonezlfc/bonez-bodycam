@@ -132,18 +132,27 @@ end
 -- ── Permission helper ──────────────────────────────────────────
 
 local function HasAccess()
-    if not Config.AdminRoles or #Config.AdminRoles == 0 then return true end
+    if not Config.AdminRoles or #Config.AdminRoles == 0 then
+        DebugPrint('MENU', 'HasAccess → true (no roles configured — open to all)')
+        return true
+    end
     for _, required in ipairs(Config.AdminRoles) do
         for _, role in ipairs(playerPerms) do
-            if role == required then return true end
+            if role == required then
+                DebugPrint('MENU', 'HasAccess → true (matched role: ' .. tostring(required) .. ')')
+                return true
+            end
         end
     end
+    DebugPrint('MENU', 'HasAccess → false | playerPerms count: ' .. #playerPerms
+        .. ' | required roles: ' .. #Config.AdminRoles)
     return false
 end
 
 -- ── Public API ─────────────────────────────────────────────────
 
 function BodycamMenu.Open()
+    DebugPrint('MENU', 'Open requested — perms received: ' .. #playerPerms)
     if not HasAccess() then
         BeginTextCommandThefeedPost('STRING')
         AddTextComponentSubstringPlayerName('~r~BODYCAM~s~: You do not have permission to access settings.')
@@ -154,4 +163,5 @@ function BodycamMenu.Open()
     if not initialized then Init() end
     Rebuild()
     mainMenu:Visible(true)
+    DebugPrint('MENU', 'Menu opened')
 end
