@@ -5,7 +5,7 @@ lua54 'yes'
 name        'bonez-bodycam'
 description 'Bodycam overlay with Axon, Motorola, and Generic styles. Optional night_ers integration for on-shift detection.'
 author      'Bonez Workshop'
-version     '2.1.0'
+version     '2.2.0'
 
 ui_page 'html/index.html'
 
